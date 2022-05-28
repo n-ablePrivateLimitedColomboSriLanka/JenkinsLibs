@@ -20,9 +20,9 @@ def call(body) {
         stages {
             stage('Build') {
                 steps {
-                    log(params.PRODUCTION_BUILD == true)
-                    log(params.PASSWORD)
-                    log(params.PASSWORD == 's0a#123')
+                    print params.PRODUCTION_BUILD == true
+                    print params.PASSWORD
+                    print params.PASSWORD == 's0a#123'
                     cleanWs()
                     checkout scm: [$class: 'GitSCM', branches: scm.branches, extensions: scm.extensions + [[$class: 'RelativeTargetDirectory', relativeTargetDir: env.APPLICATION_DEFAULT_DIR]], userRemoteConfigs: scm.userRemoteConfigs]
                     sh '/pipelinescript/build.sh ' + pipelineParams.sharedLib + ' ' + env.BRANCH_NAME
@@ -30,18 +30,20 @@ def call(body) {
             }
 
             stage('Deploy') {
-                 when {
+                when {
                     expression { (params.PRODUCTION_BUILD == true && params.PASSWORD == 's0a#123') || env.BRANCH_NAME != 'production' }
                 }
                 steps {
                    script {
-                   		def environments = getIIBServer(env.BRANCH_NAME)
-                   		for (environment in environments) {
-                   			sh '/pipelinescript/deploy.sh ' + "'${environment}' ${pipelineParams.server}"
-                   		}
-                   	}
+                        def environments = getIIBServer(env.BRANCH_NAME)
+                        for (environment in environments) {
+                            for (server in pipelineParams.serverList) {
+                                sh '/pipelinescript/deploy.sh ' + "'${environment}' ${server}"
+                            }
+                        }
+                    }
                 }
             }
         }
     }
-}}
+}
