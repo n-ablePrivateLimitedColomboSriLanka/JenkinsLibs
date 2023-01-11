@@ -13,8 +13,7 @@ def call(body) {
         }
         parameters {
             string(name: 'releaseBranch', defaultValue: 'master')
-            string(name: 'artifactRepositoryUrl', defaultValue: pipelineParams.artifactRepositoryUrlDefaultValue)
-            string(name: 'artifactRepositoryId', defaultValue: pipelineParams.artifactRepositoryIdDefaultValue)
+            text(name: 'artifactRepositoriesJSON', defaultValue: pipelineParams.artifactRepositoriesJSONDefaultValue)
             string(name: 'gitRepositoryUrl', defaultValue: pipelineParams.gitRepositoryUrlDefaultValue)
         }
         stages {
@@ -26,8 +25,17 @@ def call(body) {
             }
             stage('Deploy Artifact') {
                 steps {
-                    withMaven(maven: 'maven3', mavenSettingsConfig: 'maven3-settings', publisherStrategy: 'EXPLICIT', options: [artifactsPublisher(disabled: false)]) {
-                        sh "mvn clean package deploy -DaltDeploymentRepository=${params.artifactRepositoryId}::default::${params.artifactRepositoryUrl} -Dmaven.test.skip=true"
+                    withMaven(maven: 'maven3', mavenSettingsConfig: 'maven3-settings') {
+                        sh "mvn clean package"
+                    }
+
+                    script {
+                        artifactRepos = readJSON text: params.artifactRepositoriesJSON
+                        artifactRepos.repositories.each { repository -> 
+                            withMaven(maven: 'maven3', mavenSettingsConfig: 'maven3-settings', publisherStrategy: 'EXPLICIT', options: [artifactsPublisher(disabled: false)]) {
+                                sh "mvn deploy -DaltDeploymentRepository=${repository.id}::default::${repository.url} -Dmaven.test.skip=true"
+                            }
+                        }
                     }
                 }
             }
