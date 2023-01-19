@@ -6,7 +6,7 @@ def call(body) {
     body()
 
     pipeline {
-        agent { label 'ACE12' }
+        agent any
         environment {
            APPLICATION_DEFAULT_DIR='APPLICATION_5JITHW8YDN7KSW'
         }
@@ -15,50 +15,74 @@ def call(body) {
             buildDiscarder(logRotator(numToKeepStr: '-1', artifactNumToKeepStr: '2'))
         }
         parameters {
-            booleanParam(name: 'PRODUCTION_BUILD', defaultValue: false, description: '')
-            string(name: 'PASSWORD', defaultValue: '', description: '')
-            string(name: 'DEPLOY_INTERVAL', defaultValue: '10', description: 'Time between each deployment to multiple integration nodes')
+            string(name: 'releaseBranch', defaultValue: 'master')
+            text(name: 'artifactRepositoriesJSON', defaultValue: pipelineParams.artifactRepositoriesJSONDefaultValue)
+            string(name: 'gitRepositoryUrl', defaultValue: pipelineParams.gitRepositoryUrlDefaultValue)
+            string(name: 'sharedLibIndexUrl', defaultValue: pipelineParams.sharedLibIndexUrlDefaultValue)
         }
         stages {
-            stage('Build') {
+            stage('Checkout SCM') {
                 steps {
                     cleanWs()
                     script {
-                        scmvars = checkout scm: [$class: 'GitSCM', branches: scm.branches, extensions: scm.extensions + [[$class: 'RelativeTargetDirectory', relativeTargetDir: env.APPLICATION_DEFAULT_DIR]], userRemoteConfigs: scm.userRemoteConfigs]
+                        scmvars = checkout scmGit(
+                                        branches: [[name: "*/${params.releaseBranch}"]],
+                                        extensions: [
+                                            cloneOption(depth: 1, noTags: true, reference: '', shallow: true),
+                                            [$class: 'IgnoreNotifyCommit'],
+                                            [$class: 'RelativeTargetDirectory', relativeTargetDir: env.APPLICATION_DEFAULT_DIR]
+                                        ],
+                                        userRemoteConfigs: [
+                                            [credentialsId: 'jenkins_github_app', url: params.gitRepositoryUrl]
+                                        ]
+                                 )
                     }
-                    sh '/pipelinescript/build.sh ' + pipelineParams.sharedLib + ' ' + env.BRANCH_NAME
                 }
             }
 
-            stage('Deploy') {
-                when {
-                    expression { (params.PRODUCTION_BUILD == true && params.PASSWORD == 's0a#123') || env.BRANCH_NAME != 'production' }
+            stage('Checkout Build Scripts') {
+                steps {
+                    checkout scmGit(
+                                    branches: [[name: "*/buildtest"]],
+                                    extensions: [
+                                        cloneOption(depth: 1, noTags: true, reference: '', shallow: true),
+                                        [$class: 'IgnoreNotifyCommit'],
+                                        [$class: 'RelativeTargetDirectory', relativeTargetDir: "buildscripts"]
+                                    ],
+                                    userRemoteConfigs: [
+                                        [credentialsId: 'jenkins_github_app', url:  'https://github.com/IreshMM/iresh-s-buildscripts.git']
+                                    ]
+                             )
+
                 }
+            }
+
+            stage('Build') {
+                agent {
+                    docker {
+                        image 'ireshmm/ace-builder:12.0.2'
+                        reuseNode true
+                    }
+				}
+                steps {
+                    sh 'buildscripts/ace/build.sh ' + params.sharedLibIndexUrl + ' ' + params.releaseBranch
+                }
+            }
+            
+            stage('Deploy Artifact') {
                 steps {
                     script {
-                        if(pipelineParams.server?.trim()) {
-                            serverList = [pipelineParams.server]
-                        } else {
-                            serverList = pipelineParams.serverList
-                        }
-                        environments = getIIBServer(env.BRANCH_NAME)
-                        environments.eachWithIndex { environment, index ->
-                            for (server in serverList) {
-                                sh '/pipelinescript/deploy.sh ' + "'${environment}' ${server}"
-                            }
-                            if(index < environments.size() - 1) {
-                                print "Waiting ${params.DEPLOY_INTERVAL} seconds until the deployment to next node"
-                                sleep params.DEPLOY_INTERVAL as int
+                        artifactRepos = readJSON text: params.artifactRepositoriesJSON
+                        artifactRepos.repositories.each { repository -> 
+                            withMaven(maven: 'maven3', mavenSettingsConfig: 'maven3-settings', publisherStrategy: 'EXPLICIT', options: [artifactsPublisher(disabled: false)]) {
+                                sh "mvn deploy:deploy-file -DrepositoryId=${repository.id} -Durl=${repository.url} -Dfile=`echo *.bar` -DpomFile=${env.APPLICATION_DEFAULT_DIR}/pom.xml -Dpackaging=bar"
                             }
                         }
                     }
                 }
             }
-
+            
             stage('Archive artifact') {
-                when {
-                    expression { env.BRANCH_NAME == 'production' }
-                }
                 steps {
                     script {
                         appName = readFile('appname').trim()
