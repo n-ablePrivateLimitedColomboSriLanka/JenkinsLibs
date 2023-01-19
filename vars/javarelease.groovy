@@ -15,12 +15,13 @@ def call(body) {
             string(name: 'releaseBranch', defaultValue: 'master')
             text(name: 'artifactRepositoriesJSON', defaultValue: pipelineParams.artifactRepositoriesJSONDefaultValue)
             string(name: 'gitRepositoryUrl', defaultValue: pipelineParams.gitRepositoryUrlDefaultValue)
+            string(name: 'githubCredentialsId', defaultValue: pipelineParams.githubCredentialsIdDefaultValue)
         }
         stages {
             stage('Checkout SCM') {
                 steps {
                     cleanWs()
-                    git credentialsId: 'jenkins_github_app', url: params.gitRepositoryUrl, branch: params.releaseBranch
+                    git credentialsId: params.githubCredentialsId, url: params.gitRepositoryUrl, branch: params.releaseBranch
                 }
             }
             stage('Deploy Artifact') {

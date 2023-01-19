@@ -19,6 +19,8 @@ def call(body) {
             text(name: 'artifactRepositoriesJSON', defaultValue: pipelineParams.artifactRepositoriesJSONDefaultValue)
             string(name: 'gitRepositoryUrl', defaultValue: pipelineParams.gitRepositoryUrlDefaultValue)
             string(name: 'sharedLibIndexUrl', defaultValue: pipelineParams.sharedLibIndexUrlDefaultValue)
+            string(name: 'githubCredentialsId', defaultValue: pipelineParams.githubCredentialsIdDefaultValue)
+            string(name: 'aceBuildScriptsRepository', defaultValue: pipelineParams.aceBuildScriptsRepositoryDefaultValue)
         }
         stages {
             stage('Checkout SCM') {
@@ -33,7 +35,7 @@ def call(body) {
                                             [$class: 'RelativeTargetDirectory', relativeTargetDir: env.APPLICATION_DEFAULT_DIR]
                                         ],
                                         userRemoteConfigs: [
-                                            [credentialsId: 'jenkins_github_app', url: params.gitRepositoryUrl]
+                                            [credentialsId: params.githubCredentialsId, url: params.gitRepositoryUrl]
                                         ]
                                  )
                     }
@@ -50,7 +52,7 @@ def call(body) {
                                         [$class: 'RelativeTargetDirectory', relativeTargetDir: "buildscripts"]
                                     ],
                                     userRemoteConfigs: [
-                                        [credentialsId: 'jenkins_github_app', url:  'https://github.com/IreshMM/iresh-s-buildscripts.git']
+                                        [credentialsId: params.githubCredentialsId, url: params.aceBuildScriptsRepository]
                                     ]
                              )
 
