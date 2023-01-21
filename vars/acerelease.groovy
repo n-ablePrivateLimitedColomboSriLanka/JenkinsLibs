@@ -15,7 +15,7 @@ def call(body) {
             buildDiscarder(logRotator(numToKeepStr: '-1', artifactNumToKeepStr: '2'))
         }
         parameters {
-            string(name: 'releaseBranch', defaultValue: 'master')
+            string(name: 'releaseBranch', defaultValue: pipelineParams.releaseBranchDefaultValue)
             text(name: 'artifactRepositoriesJSON', defaultValue: pipelineParams.artifactRepositoriesJSONDefaultValue)
             string(name: 'gitRepositoryUrl', defaultValue: pipelineParams.gitRepositoryUrlDefaultValue)
             string(name: 'sharedLibIndexUrl', defaultValue: pipelineParams.sharedLibIndexUrlDefaultValue)
@@ -45,7 +45,7 @@ def call(body) {
             stage('Checkout Build Scripts') {
                 steps {
                     checkout scmGit(
-                                    branches: [[name: "*/buildtest"]],
+                                    branches: [[name: "*/master"]],
                                     extensions: [
                                         cloneOption(depth: 1, noTags: true, reference: '', shallow: true),
                                         [$class: 'IgnoreNotifyCommit'],

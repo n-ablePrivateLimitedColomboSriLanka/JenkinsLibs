@@ -12,7 +12,7 @@ def call(body) {
             buildDiscarder(logRotator(numToKeepStr: '-1', artifactNumToKeepStr: '2'))
         }
         parameters {
-            string(name: 'releaseBranch', defaultValue: 'master')
+            string(name: 'releaseBranch', defaultValue: pipelineParams.releaseBranchDefaultValue)
             text(name: 'artifactRepositoriesJSON', defaultValue: pipelineParams.artifactRepositoriesJSONDefaultValue)
             string(name: 'gitRepositoryUrl', defaultValue: pipelineParams.gitRepositoryUrlDefaultValue)
             string(name: 'githubCredentialsId', defaultValue: pipelineParams.githubCredentialsIdDefaultValue)
