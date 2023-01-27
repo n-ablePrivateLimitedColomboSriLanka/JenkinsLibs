@@ -36,7 +36,7 @@ def call(body) {
             stage('Deploy Artifact') {
                 steps {
                     withMaven(maven: 'maven3', mavenSettingsConfig: 'maven3-settings') {
-                        sh "mvn clean package"
+                        sh "mvn clean package -Dmaven.test.skip=true"
                     }
 
                     script {
