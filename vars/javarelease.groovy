@@ -21,7 +21,16 @@ def call(body) {
             stage('Checkout SCM') {
                 steps {
                     cleanWs()
-                    git credentialsId: params.githubCredentialsId, url: params.gitRepositoryUrl, branch: params.releaseBranch
+                    checkout scmGit(
+                                 branches: [[name: "*/${params.releaseBranch}"]],
+                                 extensions: [
+                                     cloneOption(depth: 1, noTags: true, reference: '', shallow: true),
+                                     [$class: 'IgnoreNotifyCommit']
+                                 ],
+                                 userRemoteConfigs: [
+                                     [credentialsId: params.githubCredentialsId, url: params.gitRepositoryUrl]
+                                 ]
+                             )
                 }
             }
             stage('Deploy Artifact') {
