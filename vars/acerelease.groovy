@@ -67,7 +67,9 @@ def call(body) {
                     }
 				}
                 steps {
-                    sh 'buildscripts/ace/build.sh ' + params.sharedLibIndexUrl + ' ' + params.releaseBranch
+                    withCredentials([gitUsernamePassword(credentialsId: params.githubCredentialsId, gitToolName: 'Default')]) {
+                        sh 'buildscripts/ace/build.sh ' + params.sharedLibIndexUrl + ' ' + params.releaseBranch
+                    }
                 }
             }
             
