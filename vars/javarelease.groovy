@@ -9,6 +9,7 @@ def call(body) {
         agent any
         tools {
             jdk 'JDK8'
+        }
         options {
             skipDefaultCheckout(true)
             buildDiscarder(logRotator(numToKeepStr: '-1', artifactNumToKeepStr: '2'))
