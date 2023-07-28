@@ -7,6 +7,8 @@ def call(body) {
 
     pipeline {
         agent any
+        tools {
+            jdk 'JDK8'
         options {
             skipDefaultCheckout(true)
             buildDiscarder(logRotator(numToKeepStr: '-1', artifactNumToKeepStr: '2'))
@@ -21,6 +23,7 @@ def call(body) {
             stage('Checkout SCM') {
                 steps {
                     cleanWs()
+                    sh 'java --version'
                     checkout scmGit(
                                  branches: [[name: "*/${params.releaseBranch}"]],
                                  extensions: [
