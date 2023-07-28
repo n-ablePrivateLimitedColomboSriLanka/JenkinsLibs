@@ -43,7 +43,7 @@ def call(body) {
 				}
                 steps {
                     withMaven(maven: 'maven3', mavenSettingsConfig: 'maven3-settings') {
-			sh 'pwd; ls -la'
+			sh 'echo $MVN_CMD; env'
                         sh "mvn clean package -Dmaven.test.skip=true"
                     }
 
