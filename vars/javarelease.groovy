@@ -7,9 +7,6 @@ def call(body) {
 
     pipeline {
         agent any
-        tools {
-            jdk 'JDK8'
-        }
         options {
             skipDefaultCheckout(true)
             buildDiscarder(logRotator(numToKeepStr: '-1', artifactNumToKeepStr: '2'))
@@ -38,6 +35,12 @@ def call(body) {
                 }
             }
             stage('Deploy Artifact') {
+                agent {
+                    docker {
+                        image '3.8.6-openjdk-8-slim'
+                        reuseNode true
+                    }
+				}
                 steps {
                     withMaven(maven: 'maven3', mavenSettingsConfig: 'maven3-settings') {
                         sh "mvn clean package -Dmaven.test.skip=true"
