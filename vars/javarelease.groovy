@@ -38,6 +38,7 @@ def call(body) {
                 agent {
                     docker {
                         image 'maven:3.8.6-openjdk-8-slim'
+			args: '--network ci-network'
                         reuseNode true
                     }
 				}
