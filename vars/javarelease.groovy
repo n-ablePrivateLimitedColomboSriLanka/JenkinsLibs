@@ -37,7 +37,7 @@ def call(body) {
             stage('Deploy Artifact') {
                 agent {
                     docker {
-                        image '3.8.6-openjdk-8-slim'
+                        image 'maven:3.8.6-openjdk-8-slim'
                         reuseNode true
                     }
 				}
