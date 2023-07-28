@@ -43,8 +43,7 @@ def call(body) {
 				}
                 steps {
                     withMaven(maven: 'maven3', mavenSettingsConfig: 'maven3-settings') {
-			sh 'echo $MVN_CMD; env'
-                        sh "mvn clean package -Dmaven.test.skip=true"
+                        sh "PATH=$MVN_CMD:$PATH mvn clean package -Dmaven.test.skip=true"
                     }
 
                     script {
