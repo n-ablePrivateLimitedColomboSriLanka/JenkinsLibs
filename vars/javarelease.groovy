@@ -24,7 +24,7 @@ def call(body) {
             stage('Checkout SCM') {
                 steps {
                     cleanWs()
-                    sh 'java --version'
+                    sh 'java -version'
                     checkout scmGit(
                                  branches: [[name: "*/${params.releaseBranch}"]],
                                  extensions: [
